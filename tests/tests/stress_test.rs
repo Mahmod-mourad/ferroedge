@@ -19,13 +19,13 @@ use proto::edge::edge_service_server::EdgeServiceServer;
 use wasm_runtime::{CompiledModuleCache, WasmEngine, WasmSandbox};
 
 // ── Port assignments ───────────────────────────────────────────────────────
-const STRESS_CP_PORT: u16  = 19_080;
+const STRESS_CP_PORT: u16 = 19_080;
 const STRESS_EN1_PORT: u16 = 16_051;
 const STRESS_EN2_PORT: u16 = 16_052;
 
-const FAIL_CP_PORT: u16    = 19_082;
-const FAIL_EN1_PORT: u16   = 16_053;
-const FAIL_EN2_PORT: u16   = 16_054;
+const FAIL_CP_PORT: u16 = 19_082;
+const FAIL_EN1_PORT: u16 = 16_053;
+const FAIL_EN2_PORT: u16 = 16_054;
 
 // ── WASM helpers ───────────────────────────────────────────────────────────
 
@@ -48,12 +48,12 @@ fn echo_wasm_bytes() -> Vec<u8> {
 // ── Edge-node factory ──────────────────────────────────────────────────────
 
 fn make_edge_server(node_id: &str, control_plane_url: &str) -> EdgeGrpcServer {
-    let engine       = Arc::new(WasmEngine::new().expect("WasmEngine"));
-    let sandbox      = Arc::new(WasmSandbox::new(Arc::clone(&engine)));
+    let engine = Arc::new(WasmEngine::new().expect("WasmEngine"));
+    let sandbox = Arc::new(WasmSandbox::new(Arc::clone(&engine)));
     let module_cache = Arc::new(CompiledModuleCache::new(Arc::clone(&engine), 50, 300));
-    let downloader   = Arc::new(ModuleDownloader::new(control_plane_url));
-    let en_state     = Arc::new(RwLock::new(NodeState::new(node_id)));
-    let semaphore    = Arc::new(Semaphore::new(20)); // 20 concurrent tasks each
+    let downloader = Arc::new(ModuleDownloader::new(control_plane_url));
+    let en_state = Arc::new(RwLock::new(NodeState::new(node_id)));
+    let semaphore = Arc::new(Semaphore::new(20)); // 20 concurrent tasks each
 
     EdgeGrpcServer {
         node_id: node_id.to_string(),
@@ -69,10 +69,10 @@ fn make_edge_server(node_id: &str, control_plane_url: &str) -> EdgeGrpcServer {
 
 /// Bind a control-plane and return (shared_state, http_base).
 async fn start_control_plane(port: u16) -> (Arc<RwLock<AppState>>, String) {
-    let cp_state  = Arc::new(RwLock::new(AppState::default()));
+    let cp_state = Arc::new(RwLock::new(AppState::default()));
     let cp_router = build_router(Arc::clone(&cp_state));
-    let addr      = SocketAddr::from(([127, 0, 0, 1], port));
-    let listener  = tokio::net::TcpListener::bind(addr).await.expect("bind CP");
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let listener = tokio::net::TcpListener::bind(addr).await.expect("bind CP");
     tokio::spawn(async move {
         axum::serve(listener, cp_router).await.ok();
     });
@@ -81,7 +81,7 @@ async fn start_control_plane(port: u16) -> (Arc<RwLock<AppState>>, String) {
 
 /// Bind an edge-node gRPC server; control_plane_url is used by the downloader.
 async fn start_edge_node(node_id: &str, grpc_port: u16, cp_url: &str) {
-    let svc  = make_edge_server(node_id, cp_url);
+    let svc = make_edge_server(node_id, cp_url);
     let addr = SocketAddr::from(([127, 0, 0, 1], grpc_port));
     tokio::spawn(async move {
         TonicServer::builder()
@@ -94,7 +94,7 @@ async fn start_edge_node(node_id: &str, grpc_port: u16, cp_url: &str) {
 
 /// Submit one task and return the elapsed time.
 async fn submit_one_task(http: &reqwest::Client, base: &str, idx: usize) -> Duration {
-    let wasm_b64  = B64.encode(echo_wasm_bytes());
+    let wasm_b64 = B64.encode(echo_wasm_bytes());
     let input_str = format!("task-{idx}");
     let input_b64 = B64.encode(input_str.as_bytes());
 
@@ -145,7 +145,10 @@ async fn test_concurrent_task_execution() {
     let http = reqwest::Client::new();
 
     // Register both nodes.
-    for (id, port) in [("stress-node-1", STRESS_EN1_PORT), ("stress-node-2", STRESS_EN2_PORT)] {
+    for (id, port) in [
+        ("stress-node-1", STRESS_EN1_PORT),
+        ("stress-node-2", STRESS_EN2_PORT),
+    ] {
         let r = http
             .post(format!("{base}/nodes/register"))
             .json(&serde_json::json!({
@@ -230,7 +233,9 @@ async fn test_concurrent_task_execution() {
         assert!(
             node.active_tasks <= node.max_concurrent_tasks,
             "node {} active_tasks {} exceeds max {}",
-            node.id, node.active_tasks, node.max_concurrent_tasks
+            node.id,
+            node.active_tasks,
+            node.max_concurrent_tasks
         );
     }
 }
@@ -254,7 +259,7 @@ async fn test_node_failure_handling() {
     start_edge_node("fail-node-2", FAIL_EN2_PORT, &cp_url).await;
 
     // ── Start node-1 behind an abortable handle ───────────────────────────────
-    let svc1     = make_edge_server("fail-node-1", &cp_url);
+    let svc1 = make_edge_server("fail-node-1", &cp_url);
     let en1_addr = SocketAddr::from(([127, 0, 0, 1], FAIL_EN1_PORT));
     let en1_handle = tokio::spawn(async move {
         TonicServer::builder()
@@ -269,7 +274,10 @@ async fn test_node_failure_handling() {
     let http = reqwest::Client::new();
 
     // Register both nodes.
-    for (id, port) in [("fail-node-1", FAIL_EN1_PORT), ("fail-node-2", FAIL_EN2_PORT)] {
+    for (id, port) in [
+        ("fail-node-1", FAIL_EN1_PORT),
+        ("fail-node-2", FAIL_EN2_PORT),
+    ] {
         let r = http
             .post(format!("{base}/nodes/register"))
             .json(&serde_json::json!({
@@ -284,7 +292,7 @@ async fn test_node_failure_handling() {
     }
 
     // ── Phase 1: both nodes alive — submit 10 tasks, all should succeed ───────
-    let wasm_b64  = B64.encode(echo_wasm_bytes());
+    let wasm_b64 = B64.encode(echo_wasm_bytes());
     let input_b64 = B64.encode(b"hello");
 
     for i in 0..10u32 {
@@ -302,7 +310,10 @@ async fn test_node_failure_handling() {
             .await
             .expect("phase-1 JSON");
 
-        let task_id = resp["data"]["task_id"].as_str().expect("task_id").to_string();
+        let task_id = resp["data"]["task_id"]
+            .as_str()
+            .expect("task_id")
+            .to_string();
 
         let deadline = Instant::now() + Duration::from_secs(10);
         loop {
@@ -366,7 +377,10 @@ async fn test_node_failure_handling() {
             .await
             .expect("phase-3 JSON");
 
-        let task_id = resp["data"]["task_id"].as_str().expect("task_id").to_string();
+        let task_id = resp["data"]["task_id"]
+            .as_str()
+            .expect("task_id")
+            .to_string();
 
         let deadline = Instant::now() + Duration::from_secs(10);
         loop {

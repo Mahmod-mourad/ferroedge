@@ -56,10 +56,10 @@ impl EdgeService for EdgeGrpcServer {
             p.extract(&MetadataExtractor(request.metadata()))
         });
 
-        let req      = request.into_inner();
-        let task_id  = req.task_id.clone();
+        let req = request.into_inner();
+        let task_id = req.task_id.clone();
         let trace_id = req.trace_id.clone();
-        let node_id  = self.node_id.clone();
+        let node_id = self.node_id.clone();
 
         // ── Root span for this RPC — child of the control-plane span ──────────
         let span = tracing::info_span!(
@@ -84,8 +84,12 @@ impl EdgeService for EdgeGrpcServer {
 
         let config = ExecutionConfig {
             memory_limit_bytes: req.memory_limit_mb.max(1) * 1024 * 1024,
-            timeout_ms:         if req.timeout_ms == 0 { 5_000 } else { req.timeout_ms },
-            function_name:      req.function_name.clone(),
+            timeout_ms: if req.timeout_ms == 0 {
+                5_000
+            } else {
+                req.timeout_ms
+            },
+            function_name: req.function_name.clone(),
         };
 
         let exec_start = Instant::now();
@@ -192,7 +196,9 @@ impl EdgeService for EdgeGrpcServer {
                     trace_id = %trace_id,
                 );
                 let _ee = _exec_span.enter();
-                self.sandbox.execute_compiled(module, config, &req.input).await
+                self.sandbox
+                    .execute_compiled(module, config, &req.input)
+                    .await
             }
 
             None => {
@@ -240,10 +246,10 @@ impl EdgeService for EdgeGrpcServer {
                 );
                 ExecuteTaskResponse {
                     task_id,
-                    success:           true,
-                    output:            exec.output,
+                    success: true,
+                    output: exec.output,
                     execution_time_ms: exec.execution_time_ms,
-                    error:             String::new(),
+                    error: String::new(),
                 }
             }
             Err(e) => {
@@ -256,10 +262,10 @@ impl EdgeService for EdgeGrpcServer {
                 );
                 ExecuteTaskResponse {
                     task_id,
-                    success:           false,
-                    output:            Vec::new(),
+                    success: false,
+                    output: Vec::new(),
                     execution_time_ms: 0,
-                    error:             e.to_string(),
+                    error: e.to_string(),
                 }
             }
         };
@@ -273,10 +279,9 @@ impl EdgeService for EdgeGrpcServer {
     ) -> Result<Response<HealthResponse>, Status> {
         let st = self.state.read().await;
         Ok(Response::new(HealthResponse {
-            node_id:      self.node_id.clone(),
+            node_id: self.node_id.clone(),
             active_tasks: st.active_tasks as u32,
-            ready:        true,
+            ready: true,
         }))
     }
 }
-

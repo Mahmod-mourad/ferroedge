@@ -1,8 +1,8 @@
 use tonic::transport::Channel;
 
 use crate::edge::{
-    edge_service_client::EdgeServiceClient, ExecuteTaskRequest, ExecuteTaskResponse,
-    HealthRequest, HealthResponse,
+    edge_service_client::EdgeServiceClient, ExecuteTaskRequest, ExecuteTaskResponse, HealthRequest,
+    HealthResponse,
 };
 
 /// Thin wrapper around the generated tonic client for an edge-node.

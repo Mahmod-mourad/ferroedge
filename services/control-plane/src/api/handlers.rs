@@ -21,15 +21,9 @@ use common::{
     errors::EdgeError,
     types::{NodeInfo, TaskResult},
 };
-use proto::{
-    edge::{execute_task_request::WasmSource, ExecuteTaskRequest, ModuleRef},
-};
+use proto::edge::{execute_task_request::WasmSource, ExecuteTaskRequest, ModuleRef};
 
-use crate::{
-    api::routes::TraceId,
-    scheduler::least_loaded::select_least_loaded,
-    state::AppState,
-};
+use crate::{api::routes::TraceId, scheduler::least_loaded::select_least_loaded, state::AppState};
 
 // ── W3C TraceContext carrier for tonic gRPC metadata ─────────────────────
 
@@ -59,12 +53,18 @@ pub struct ApiResponse<T: Serialize> {
 
 impl<T: Serialize> ApiResponse<T> {
     pub fn ok(data: T) -> Json<Self> {
-        Json(ApiResponse { data: Some(data), error: None })
+        Json(ApiResponse {
+            data: Some(data),
+            error: None,
+        })
     }
 }
 
 fn error_response(msg: impl Into<String>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse { data: None, error: Some(msg.into()) })
+    Json(ApiResponse {
+        data: None,
+        error: Some(msg.into()),
+    })
 }
 
 // ── AppError ───────────────────────────────────────────────────────────────
@@ -72,17 +72,19 @@ fn error_response(msg: impl Into<String>) -> Json<ApiResponse<serde_json::Value>
 pub struct AppError(EdgeError);
 
 impl From<EdgeError> for AppError {
-    fn from(e: EdgeError) -> Self { AppError(e) }
+    fn from(e: EdgeError) -> Self {
+        AppError(e)
+    }
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = match &self.0 {
-            EdgeError::TaskNotFound(_)    => StatusCode::NOT_FOUND,
+            EdgeError::TaskNotFound(_) => StatusCode::NOT_FOUND,
             EdgeError::NodeUnavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
-            EdgeError::Timeout            => StatusCode::GATEWAY_TIMEOUT,
-            EdgeError::InvalidWasm(_)     => StatusCode::BAD_REQUEST,
-            _                             => StatusCode::INTERNAL_SERVER_ERROR,
+            EdgeError::Timeout => StatusCode::GATEWAY_TIMEOUT,
+            EdgeError::InvalidWasm(_) => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (status, error_response(self.0.to_string())).into_response()
     }
@@ -144,7 +146,10 @@ pub struct RetryConfig {
 
 impl Default for RetryConfig {
     fn default() -> Self {
-        Self { max_attempts: 3, backoff_ms: 500 }
+        Self {
+            max_attempts: 3,
+            backoff_ms: 500,
+        }
     }
 }
 
@@ -199,10 +204,7 @@ async fn grpc_execute(
 
     // Grab (or lazily create) a channel — non-blocking, no network I/O.
     let pool_arc = state.read().await.connection_pool.clone();
-    let mut client = pool_arc
-        .lock()
-        .await
-        .get_or_create(node_id, address)?;
+    let mut client = pool_arc.lock().await.get_or_create(node_id, address)?;
 
     let mut tonic_req = tonic::Request::new(req);
 
@@ -233,14 +235,14 @@ async fn dispatch_task(
     telemetry::metrics::TASKS_SUBMITTED_TOTAL.inc();
     state.write().await.total_submitted += 1;
 
-    let retry_cfg    = RetryConfig::default();
+    let retry_cfg = RetryConfig::default();
     let mut tried_nodes: HashSet<String> = HashSet::new();
     #[allow(unused_assignments)]
-    let mut last_error   = String::new();
-    let mut no_node_count  = 0u32;
+    let mut last_error = String::new();
+    let mut no_node_count = 0u32;
     let mut capacity_waits = 0u32;
     const MAX_CAPACITY_WAITS: u32 = 30;
-    let mut error_retries  = 0u32;
+    let mut error_retries = 0u32;
     let e2e_start = Instant::now();
 
     loop {
@@ -281,8 +283,7 @@ async fn dispatch_task(
                         "no schedulable node — queued, retrying in 1s"
                     );
                     tokio::time::sleep(Duration::from_secs(1)).await;
-                    state.write().await.queued =
-                        state.read().await.queued.saturating_sub(1);
+                    state.write().await.queued = state.read().await.queued.saturating_sub(1);
                 }
             }
         };
@@ -306,13 +307,13 @@ async fn dispatch_task(
         }
 
         let grpc_req = ExecuteTaskRequest {
-            task_id:        task_id.clone(),
-            function_name:  function_name.clone(),
-            input:          input.clone(),
+            task_id: task_id.clone(),
+            function_name: function_name.clone(),
+            input: input.clone(),
             timeout_ms,
             memory_limit_mb,
-            trace_id:       trace_id.clone(),
-            wasm_source:    Some(wasm_source.clone()),
+            trace_id: trace_id.clone(),
+            wasm_source: Some(wasm_source.clone()),
         };
 
         let dispatch_span = tracing::info_span!(
@@ -342,12 +343,12 @@ async fn dispatch_task(
                 telemetry::metrics::TASK_E2E_DURATION_MS.observe(e2e_ms);
 
                 let task_result = TaskResult {
-                    task_id:           task_id.clone(),
-                    node_id:           node.id.clone(),
-                    success:           true,
-                    output:            resp.output,
+                    task_id: task_id.clone(),
+                    node_id: node.id.clone(),
+                    success: true,
+                    output: resp.output,
                     execution_time_ms: resp.execution_time_ms,
-                    error:             None,
+                    error: None,
                 };
                 {
                     let mut st = state.write().await;
@@ -444,12 +445,12 @@ async fn dispatch_task(
         "all retry attempts failed"
     );
     let task_result = TaskResult {
-        task_id:           task_id.clone(),
-        node_id:           "none".to_string(),
-        success:           false,
-        output:            Vec::new(),
+        task_id: task_id.clone(),
+        node_id: "none".to_string(),
+        success: false,
+        output: Vec::new(),
         execution_time_ms: 0,
-        error:             Some(format!("All nodes failed: {last_error}")),
+        error: Some(format!("All nodes failed: {last_error}")),
     };
     let mut st = state.write().await;
     st.tasks.insert(task_id.clone(), task_result);
@@ -471,7 +472,7 @@ pub async fn health(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoResp
 pub async fn metrics(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoResponse {
     let st = state.read().await;
 
-    let healthy_nodes   = st.nodes.values().filter(|n| n.healthy).count();
+    let healthy_nodes = st.nodes.values().filter(|n| n.healthy).count();
     let unhealthy_nodes = st.nodes.values().filter(|n| !n.healthy).count();
 
     let cb_states: HashMap<String, &'static str> = st
@@ -600,9 +601,7 @@ async fn warm_nodes(
 }
 
 #[instrument(skip(state))]
-pub async fn list_modules(
-    State(state): State<Arc<RwLock<AppState>>>,
-) -> impl IntoResponse {
+pub async fn list_modules(State(state): State<Arc<RwLock<AppState>>>) -> impl IntoResponse {
     let guard = state.read().await;
     let modules: Vec<serde_json::Value> = guard
         .module_registry
@@ -640,10 +639,10 @@ pub async fn submit_task(
     let task_id = Uuid::new_v4().to_string();
     tracing::Span::current()
         .record("trace_id", &tracing::field::display(&trace_id))
-        .record("task_id",  &tracing::field::display(&task_id));
+        .record("task_id", &tracing::field::display(&task_id));
 
     let (input, wasm_source) = resolve_task_inputs(&state, &body).await?;
-    let timeout_ms      = body.timeout_ms.unwrap_or(5_000);
+    let timeout_ms = body.timeout_ms.unwrap_or(5_000);
     let memory_limit_mb = body.memory_limit_mb.unwrap_or(64);
 
     let returned_id = dispatch_task(
@@ -658,7 +657,9 @@ pub async fn submit_task(
     )
     .await;
 
-    Ok(ApiResponse::ok(serde_json::json!({ "task_id": returned_id })))
+    Ok(ApiResponse::ok(
+        serde_json::json!({ "task_id": returned_id }),
+    ))
 }
 
 /// POST /tasks/batch — dispatch up to 100 tasks concurrently.
@@ -683,7 +684,7 @@ pub async fn submit_tasks_batch(
     }
 
     tracing::Span::current()
-        .record("trace_id",   &tracing::field::display(&trace_id))
+        .record("trace_id", &tracing::field::display(&trace_id))
         .record("batch_size", body.tasks.len());
 
     // Build all task futures, resolving WASM sources upfront.
@@ -691,28 +692,37 @@ pub async fn submit_tasks_batch(
 
     for item in body.tasks {
         let req = SubmitTaskRequest {
-            wasm_base64:    item.wasm_base64,
-            module_name:    item.module_name,
+            wasm_base64: item.wasm_base64,
+            module_name: item.module_name,
             module_version: item.module_version,
-            function_name:  item.function_name,
-            input_base64:   item.input_base64,
-            timeout_ms:     item.timeout_ms,
+            function_name: item.function_name,
+            input_base64: item.input_base64,
+            timeout_ms: item.timeout_ms,
             memory_limit_mb: item.memory_limit_mb,
         };
 
         let (input, wasm_source) = resolve_task_inputs(&state, &req).await?;
 
-        let task_id       = Uuid::new_v4().to_string();
-        let timeout_ms    = req.timeout_ms.unwrap_or(5_000);
-        let mem_limit     = req.memory_limit_mb.unwrap_or(64);
-        let fn_name       = req.function_name.clone();
-        let tc            = trace_id.clone();
-        let state_clone   = Arc::clone(&state);
-        let tid           = task_id.clone();
+        let task_id = Uuid::new_v4().to_string();
+        let timeout_ms = req.timeout_ms.unwrap_or(5_000);
+        let mem_limit = req.memory_limit_mb.unwrap_or(64);
+        let fn_name = req.function_name.clone();
+        let tc = trace_id.clone();
+        let state_clone = Arc::clone(&state);
+        let tid = task_id.clone();
 
         task_futures.push(tokio::spawn(async move {
-            dispatch_task(state_clone, tid, tc, input, wasm_source, fn_name, timeout_ms, mem_limit)
-                .await
+            dispatch_task(
+                state_clone,
+                tid,
+                tc,
+                input,
+                wasm_source,
+                fn_name,
+                timeout_ms,
+                mem_limit,
+            )
+            .await
         }));
     }
 
@@ -750,9 +760,9 @@ async fn resolve_task_inputs(
                 .ok_or_else(|| AppError(EdgeError::TaskNotFound(format!("{name}:{version}"))))?;
             let fetch_url = format!("{}/modules/{}/{}", guard.self_url, name, version);
             let module_ref = ModuleRef {
-                name:      name.clone(),
-                version:   version.clone(),
-                hash:      meta.hash.clone(),
+                name: name.clone(),
+                version: version.clone(),
+                hash: meta.hash.clone(),
                 fetch_url,
             };
             drop(guard);
@@ -760,13 +770,11 @@ async fn resolve_task_inputs(
         }
         _ => {
             let wasm_bytes = B64
-                .decode(
-                    body.wasm_base64.as_deref().ok_or_else(|| {
-                        AppError(EdgeError::InvalidWasm(
-                            "provide wasm_base64 or module_name+module_version".to_string(),
-                        ))
-                    })?,
-                )
+                .decode(body.wasm_base64.as_deref().ok_or_else(|| {
+                    AppError(EdgeError::InvalidWasm(
+                        "provide wasm_base64 or module_name+module_version".to_string(),
+                    ))
+                })?)
                 .map_err(|e| AppError(EdgeError::InvalidWasm(e.to_string())))?;
             WasmSource::WasmBytes(wasm_bytes)
         }
@@ -782,8 +790,10 @@ pub async fn get_task(
 ) -> Result<impl IntoResponse, AppError> {
     let guard = state.read().await;
     match guard.tasks.get(&id) {
-        Some(result) => Ok(ApiResponse::ok(serde_json::to_value(result).unwrap_or_default())),
-        None         => Ok(ApiResponse::ok(serde_json::json!({ "status": "pending" }))),
+        Some(result) => Ok(ApiResponse::ok(
+            serde_json::to_value(result).unwrap_or_default(),
+        )),
+        None => Ok(ApiResponse::ok(serde_json::json!({ "status": "pending" }))),
     }
 }
 
@@ -793,11 +803,11 @@ pub async fn register_node(
     Json(body): Json<RegisterNodeRequest>,
 ) -> impl IntoResponse {
     let node = NodeInfo {
-        id:                   body.node_id.clone(),
-        address:              body.address,
-        http_address:         body.http_address.unwrap_or_default(),
-        active_tasks:         0,
-        healthy:              true,
+        id: body.node_id.clone(),
+        address: body.address,
+        http_address: body.http_address.unwrap_or_default(),
+        active_tasks: 0,
+        healthy: true,
         max_concurrent_tasks: body.max_concurrent_tasks.unwrap_or(10),
     };
     state.write().await.nodes.insert(body.node_id.clone(), node);

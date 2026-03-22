@@ -137,8 +137,9 @@ impl CompiledModuleCache {
             }
             LookupResult::Expired => {
                 if let Some(evicted) = inner.lru.pop(key) {
-                    inner.total_wasm_bytes =
-                        inner.total_wasm_bytes.saturating_sub(evicted.wasm_bytes as u64);
+                    inner.total_wasm_bytes = inner
+                        .total_wasm_bytes
+                        .saturating_sub(evicted.wasm_bytes as u64);
                 }
                 inner.stats.evictions += 1;
                 None
@@ -182,8 +183,9 @@ impl CompiledModuleCache {
                 }
                 LookupResult::Expired => {
                     if let Some(evicted) = inner.lru.pop(key) {
-                        inner.total_wasm_bytes =
-                            inner.total_wasm_bytes.saturating_sub(evicted.wasm_bytes as u64);
+                        inner.total_wasm_bytes = inner
+                            .total_wasm_bytes
+                            .saturating_sub(evicted.wasm_bytes as u64);
                     }
                     inner.stats.evictions += 1;
                 }
@@ -212,8 +214,9 @@ impl CompiledModuleCache {
             // If LRU will evict, subtract the evicted entry's bytes first.
             if at_cap {
                 if let Some((_, evicted)) = inner.lru.peek_lru() {
-                    inner.total_wasm_bytes =
-                        inner.total_wasm_bytes.saturating_sub(evicted.wasm_bytes as u64);
+                    inner.total_wasm_bytes = inner
+                        .total_wasm_bytes
+                        .saturating_sub(evicted.wasm_bytes as u64);
                 }
                 inner.stats.evictions += 1;
             }

@@ -53,12 +53,12 @@ async fn test_full_task_flow() {
     });
 
     // ── 2. Start edge-node ────────────────────────────────────────────────────
-    let engine       = Arc::new(WasmEngine::new().expect("WasmEngine"));
-    let sandbox      = Arc::new(WasmSandbox::new(Arc::clone(&engine)));
+    let engine = Arc::new(WasmEngine::new().expect("WasmEngine"));
+    let sandbox = Arc::new(WasmSandbox::new(Arc::clone(&engine)));
     let module_cache = Arc::new(CompiledModuleCache::new(Arc::clone(&engine), 50, 300));
-    let downloader   = Arc::new(ModuleDownloader::new(format!("http://127.0.0.1:{CP_PORT}")));
-    let en_state     = Arc::new(RwLock::new(NodeState::new("test-node")));
-    let semaphore    = Arc::new(Semaphore::new(10));
+    let downloader = Arc::new(ModuleDownloader::new(format!("http://127.0.0.1:{CP_PORT}")));
+    let en_state = Arc::new(RwLock::new(NodeState::new("test-node")));
+    let semaphore = Arc::new(Semaphore::new(10));
     let grpc_svc = EdgeGrpcServer {
         node_id: "test-node".to_string(),
         sandbox,
@@ -99,7 +99,7 @@ async fn test_full_task_flow() {
     );
 
     // ── 5. Submit task ────────────────────────────────────────────────────────
-    let wasm_b64  = B64.encode(echo_wasm_bytes());
+    let wasm_b64 = B64.encode(echo_wasm_bytes());
     let input_b64 = B64.encode(b"hello");
 
     let submit = http

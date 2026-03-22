@@ -86,11 +86,7 @@ async fn main() -> Result<()> {
     println!("└────────────────────────────────────────────────────────────────┘");
     println!();
 
-    let client = Arc::new(
-        Client::builder()
-            .timeout(Duration::from_secs(30))
-            .build()?,
-    );
+    let client = Arc::new(Client::builder().timeout(Duration::from_secs(30)).build()?);
 
     let semaphore = Arc::new(Semaphore::new(args.concurrency));
     let completed = Arc::new(AtomicUsize::new(0));

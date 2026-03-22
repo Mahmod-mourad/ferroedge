@@ -19,19 +19,11 @@ impl ModuleDownloader {
     ///
     /// Issues `GET {control_plane_url}/modules/{name}/{version}` and returns
     /// the response body bytes.
-    pub async fn download(
-        &self,
-        name: &str,
-        version: &str,
-    ) -> Result<Vec<u8>, anyhow::Error> {
+    pub async fn download(&self, name: &str, version: &str) -> Result<Vec<u8>, anyhow::Error> {
         let url = format!("{}/modules/{}/{}", self.control_plane_url, name, version);
         tracing::debug!(url = %url, "downloading module");
 
-        let resp = self
-            .client
-            .get(&url)
-            .send()
-            .await?;
+        let resp = self.client.get(&url).send().await?;
 
         if !resp.status().is_success() {
             anyhow::bail!(

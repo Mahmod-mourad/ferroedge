@@ -40,7 +40,7 @@ pub async fn check_all_nodes(state: Arc<RwLock<AppState>>) {
                 {
                     let mut st = state.write().await;
                     if let Some(node) = st.nodes.get_mut(node_id) {
-                        node.healthy      = true;
+                        node.healthy = true;
                         node.active_tasks = resp.active_tasks as usize;
                     }
                 }

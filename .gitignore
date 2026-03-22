@@ -1,4 +1,5 @@
 /target
+.claude/
 **/*.rs.bk
 .env
 .env.local

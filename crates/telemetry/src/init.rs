@@ -39,8 +39,7 @@ impl TracingMode {
 /// Safe to call multiple times (subsequent calls are silently ignored,
 /// which is important for integration tests that spin up multiple services).
 pub fn init_tracing(service_name: &str, mode: TracingMode) {
-    let env_filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
     let json_layer = fmt::layer()
         .json()
@@ -66,8 +65,7 @@ pub fn init_tracing(service_name: &str, mode: TracingMode) {
                 use opentelemetry::KeyValue;
                 use opentelemetry_otlp::WithExportConfig;
                 use opentelemetry_sdk::{
-                    propagation::TraceContextPropagator, runtime, trace as sdktrace,
-                    Resource,
+                    propagation::TraceContextPropagator, runtime, trace as sdktrace, Resource,
                 };
 
                 let tracer = opentelemetry_otlp::new_pipeline()
@@ -77,11 +75,9 @@ pub fn init_tracing(service_name: &str, mode: TracingMode) {
                             .tonic()
                             .with_endpoint(otlp_endpoint),
                     )
-                    .with_trace_config(
-                        sdktrace::config().with_resource(Resource::new(vec![
-                            KeyValue::new("service.name", service_name_owned),
-                        ])),
-                    )
+                    .with_trace_config(sdktrace::config().with_resource(Resource::new(vec![
+                        KeyValue::new("service.name", service_name_owned),
+                    ])))
                     .install_batch(runtime::Tokio)?;
 
                 // Install W3C TraceContext propagator so traceparent headers flow

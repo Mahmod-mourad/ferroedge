@@ -5,8 +5,8 @@
 
 use lazy_static::lazy_static;
 use prometheus::{
-    register_counter, register_counter_vec, register_gauge, register_gauge_vec,
-    register_histogram, Counter, CounterVec, Gauge, GaugeVec, Histogram, HistogramOpts,
+    register_counter, register_counter_vec, register_gauge, register_gauge_vec, register_histogram,
+    Counter, CounterVec, Gauge, GaugeVec, Histogram, HistogramOpts,
 };
 
 // ── Task lifecycle counters (control-plane) ────────────────────────────────
@@ -17,13 +17,11 @@ lazy_static! {
         "Total number of tasks submitted via POST /tasks"
     )
     .expect("metric registration failed");
-
     pub static ref TASKS_SUCCESS_TOTAL: Counter = register_counter!(
         "tasks_success_total",
         "Total number of tasks that completed successfully"
     )
     .expect("metric registration failed");
-
     pub static ref TASKS_FAILED_TOTAL: Counter = register_counter!(
         "tasks_failed_total",
         "Total number of tasks that failed after all retries"
@@ -34,12 +32,9 @@ lazy_static! {
 // ── WASM cache counters (edge-node) ────────────────────────────────────────
 
 lazy_static! {
-    pub static ref WASM_CACHE_HITS_TOTAL: Counter = register_counter!(
-        "wasm_cache_hits_total",
-        "Number of WASM module cache hits"
-    )
-    .expect("metric registration failed");
-
+    pub static ref WASM_CACHE_HITS_TOTAL: Counter =
+        register_counter!("wasm_cache_hits_total", "Number of WASM module cache hits")
+            .expect("metric registration failed");
     pub static ref WASM_CACHE_MISSES_TOTAL: Counter = register_counter!(
         "wasm_cache_misses_total",
         "Number of WASM module cache misses (requires download + compile)"

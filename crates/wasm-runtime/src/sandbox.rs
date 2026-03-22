@@ -206,8 +206,7 @@ fn execute_sync(
     input: Vec<u8>,
 ) -> Result<ExecutionResult, WasmError> {
     // ── 1. Validate ──────────────────────────────────────────────────────────
-    Module::validate(&engine, &wasm_bytes)
-        .map_err(|e| WasmError::InvalidWasm(e.to_string()))?;
+    Module::validate(&engine, &wasm_bytes).map_err(|e| WasmError::InvalidWasm(e.to_string()))?;
 
     // ── 2. Compile ───────────────────────────────────────────────────────────
     let compile_start = Instant::now();

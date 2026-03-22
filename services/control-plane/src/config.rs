@@ -26,8 +26,8 @@ impl Config {
             .parse::<u16>()
             .context("METRICS_PORT must be a valid port number")?;
 
-        let self_url = std::env::var("SELF_URL")
-            .unwrap_or_else(|_| format!("http://127.0.0.1:{http_port}"));
+        let self_url =
+            std::env::var("SELF_URL").unwrap_or_else(|_| format!("http://127.0.0.1:{http_port}"));
 
         Ok(Config {
             http_port,

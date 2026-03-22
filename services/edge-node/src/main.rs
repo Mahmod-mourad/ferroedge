@@ -9,11 +9,8 @@ use proto::edge::edge_service_server::EdgeServiceServer;
 use wasm_runtime::{CompiledModuleCache, WasmEngine, WasmSandbox};
 
 use edge_node::{
-    config::Config,
-    downloader::ModuleDownloader,
-    metrics::spawn_metrics_server,
-    server::EdgeGrpcServer,
-    state::NodeState,
+    config::Config, downloader::ModuleDownloader, metrics::spawn_metrics_server,
+    server::EdgeGrpcServer, state::NodeState,
 };
 
 #[tokio::main]
@@ -100,12 +97,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn register_with_control_plane(
-    url: &str,
-    node_id: &str,
-    address: &str,
-    http_address: &str,
-) {
+async fn register_with_control_plane(url: &str, node_id: &str, address: &str, http_address: &str) {
     let client = reqwest::Client::new();
     let body = serde_json::json!({
         "node_id":      node_id,

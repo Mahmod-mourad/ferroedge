@@ -64,10 +64,7 @@ fn wasm_benchmarks(c: &mut Criterion) {
     // Pre-compile the two modules once.
     let compiled_small = rt.block_on(async {
         let cache = CompiledModuleCache::new(Arc::clone(&engine), 10, 300);
-        cache
-            .get_or_compile("echo:1.0", &wasm_bytes)
-            .await
-            .unwrap()
+        cache.get_or_compile("echo:1.0", &wasm_bytes).await.unwrap()
     });
     let compiled_large = rt.block_on(async {
         let cache = CompiledModuleCache::new(Arc::clone(&engine), 10, 300);
@@ -181,10 +178,7 @@ fn wasm_benchmarks(c: &mut Criterion) {
                         timeout_ms: 30_000,
                         function_name: "process".to_string(),
                     };
-                    sandbox
-                        .execute_compiled(module, cfg, &input)
-                        .await
-                        .unwrap()
+                    sandbox.execute_compiled(module, cfg, &input).await.unwrap()
                 }
             });
         });

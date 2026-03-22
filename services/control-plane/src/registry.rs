@@ -63,8 +63,7 @@ impl ModuleRegistry {
     /// List all registered module metadata (sorted by name then version for
     /// deterministic output).
     pub fn list(&self) -> Vec<&ModuleMetadata> {
-        let mut items: Vec<&ModuleMetadata> =
-            self.modules.values().map(|(meta, _)| meta).collect();
+        let mut items: Vec<&ModuleMetadata> = self.modules.values().map(|(meta, _)| meta).collect();
         items.sort_by(|a, b| a.name.cmp(&b.name).then(a.version.cmp(&b.version)));
         items
     }

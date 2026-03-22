@@ -4,7 +4,9 @@ use anyhow::Result;
 use tokio::{net::TcpListener, sync::RwLock};
 use tracing::info;
 
-use control_plane::{api::build_router, config::Config, health::health_check_loop, state::AppState};
+use control_plane::{
+    api::build_router, config::Config, health::health_check_loop, state::AppState,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,7 +26,7 @@ async fn main() -> Result<()> {
     );
 
     let shared_state = Arc::new(RwLock::new(AppState {
-        self_url:            config.self_url.clone(),
+        self_url: config.self_url.clone(),
         scheduling_strategy: config.scheduling_strategy.clone(),
         ..AppState::default()
     }));

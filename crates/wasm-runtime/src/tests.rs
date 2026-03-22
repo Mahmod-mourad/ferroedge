@@ -111,7 +111,10 @@ async fn test_valid_wasm_execution() {
         .expect("execution should succeed");
 
     assert_eq!(result.output, input, "output must equal input");
-    assert!(result.execution_time_ms < 5_000, "should finish well within timeout");
+    assert!(
+        result.execution_time_ms < 5_000,
+        "should finish well within timeout"
+    );
 }
 
 /// 2. Garbage bytes must be rejected as InvalidWasm.
@@ -212,12 +215,18 @@ async fn test_cache_hit() {
 
     // First call — compiles (miss).
     let t0 = Instant::now();
-    let _ = cache.get_or_compile("echo:1.0", &wasm).await.expect("first compile");
+    let _ = cache
+        .get_or_compile("echo:1.0", &wasm)
+        .await
+        .expect("first compile");
     let compile_time = t0.elapsed();
 
     // Second call — served from cache (hit).
     let t1 = Instant::now();
-    let _ = cache.get_or_compile("echo:1.0", &wasm).await.expect("cache hit");
+    let _ = cache
+        .get_or_compile("echo:1.0", &wasm)
+        .await
+        .expect("cache hit");
     let cached_time = t1.elapsed();
 
     // Cached access must be at least 10× faster.
@@ -241,17 +250,26 @@ async fn test_cache_ttl() {
     let wasm = wat::parse_str(ECHO_WAT).expect("bad WAT");
 
     // Warm the cache.
-    cache.get_or_compile("echo:ttl", &wasm).await.expect("initial compile");
+    cache
+        .get_or_compile("echo:ttl", &wasm)
+        .await
+        .expect("initial compile");
 
     // Let the TTL expire.
     tokio::time::sleep(Duration::from_millis(200)).await;
 
     // Should recompile — cache entry expired.
-    cache.get_or_compile("echo:ttl", &wasm).await.expect("re-compile after TTL");
+    cache
+        .get_or_compile("echo:ttl", &wasm)
+        .await
+        .expect("re-compile after TTL");
 
     let stats = cache.stats().await;
     // Both calls are misses (first compile + re-compile after expiry).
-    assert_eq!(stats.misses, 2, "both calls should be misses (TTL expired between them)");
+    assert_eq!(
+        stats.misses, 2,
+        "both calls should be misses (TTL expired between them)"
+    );
     // The expired entry is counted as an eviction.
     assert!(stats.evictions >= 1, "expired entry must be evicted");
 }
@@ -286,9 +304,18 @@ async fn test_cache_eviction() {
     let wasm = wat::parse_str(ECHO_WAT).expect("bad WAT");
 
     // Fill the cache to capacity.
-    cache.get_or_compile("mod:1", &wasm).await.expect("insert 1");
-    cache.get_or_compile("mod:2", &wasm).await.expect("insert 2");
-    cache.get_or_compile("mod:3", &wasm).await.expect("insert 3");
+    cache
+        .get_or_compile("mod:1", &wasm)
+        .await
+        .expect("insert 1");
+    cache
+        .get_or_compile("mod:2", &wasm)
+        .await
+        .expect("insert 2");
+    cache
+        .get_or_compile("mod:3", &wasm)
+        .await
+        .expect("insert 3");
 
     let stats_before = cache.stats().await;
     assert_eq!(stats_before.size, 3, "cache should be full (size=3)");
@@ -297,10 +324,16 @@ async fn test_cache_eviction() {
     // the LRU is mod:1 because it was least recently used once mod:2 and
     // mod:3 were inserted.  But ordering depends on LRU semantics after the
     // puts.  What matters is that after one more insert the size stays bounded.
-    cache.get_or_compile("mod:4", &wasm).await.expect("insert 4 — triggers eviction");
+    cache
+        .get_or_compile("mod:4", &wasm)
+        .await
+        .expect("insert 4 — triggers eviction");
 
     let stats_after = cache.stats().await;
-    assert_eq!(stats_after.size, 3, "cache size must not exceed max_size after eviction");
+    assert_eq!(
+        stats_after.size, 3,
+        "cache size must not exceed max_size after eviction"
+    );
     assert!(
         stats_after.evictions >= 1,
         "at least one eviction must have occurred, got: {}",
