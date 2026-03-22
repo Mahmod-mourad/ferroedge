@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/elahlwany/Desktop/Apps/Rust/rust-edge-platform/tests -type f -name *.rs)",
+      "Bash(find /Users/elahlwany/Desktop/Apps/Rust/rust-edge-platform -not -path */target/* -not -path */.git/* -type f)",
+      "Bash(find /Users/elahlwany/Desktop/Apps/Rust/rust-edge-platform -type d -not -path */target/* -not -path */.git/*)"
+    ]
+  }
+}

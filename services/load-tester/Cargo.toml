@@ -1,0 +1,17 @@
+[package]
+name = "load-tester"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "load-tester"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+base64 = { workspace = true }
+reqwest = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+wat = "1"

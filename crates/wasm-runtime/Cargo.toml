@@ -1,0 +1,25 @@
+[package]
+name = "wasm-runtime"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasmtime = { version = "20", features = ["cranelift"] }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+lru = { workspace = true }
+common = { path = "../common" }
+
+[dev-dependencies]
+wat = "1"
+sha2 = { workspace = true }
+hex = { workspace = true }
+criterion = { version = "0.5", features = ["async_tokio"] }
+futures = "0.3"
+tokio = { workspace = true }
+
+[[bench]]
+name = "wasm_execution"
+harness = false

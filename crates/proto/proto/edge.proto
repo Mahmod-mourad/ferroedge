@@ -1,0 +1,48 @@
+syntax = "proto3";
+package edge;
+
+// Reference to a pre-registered WASM module in the control-plane registry.
+message ModuleRef {
+    string name      = 1;  // e.g. "image-processor"
+    string version   = 2;  // e.g. "1.0.0"
+    string hash      = 3;  // SHA-256 hex of wasm bytes — used for cache validation
+    string fetch_url = 4;  // URL to download if not cached: GET /modules/{name}/{version}
+}
+
+// Task sent from control-plane to edge-node.
+message ExecuteTaskRequest {
+    string task_id         = 1;
+    string function_name   = 3;
+    bytes  input           = 4;
+    uint64 timeout_ms      = 5;
+    uint64 memory_limit_mb = 6;
+    // UUID propagated from the originating HTTP request for log/span correlation.
+    string trace_id        = 8;
+
+    oneof wasm_source {
+        bytes     wasm_bytes  = 2;  // direct bytes (original mode)
+        ModuleRef module_ref  = 7;  // cached module reference (new mode)
+    }
+}
+
+// Result returned from edge-node.
+message ExecuteTaskResponse {
+    string task_id           = 1;
+    bool   success           = 2;
+    bytes  output            = 3;
+    uint64 execution_time_ms = 4;
+    string error             = 5;
+}
+
+// Health check.
+message HealthRequest {}
+message HealthResponse {
+    string node_id      = 1;
+    uint32 active_tasks = 2;
+    bool   ready        = 3;
+}
+
+service EdgeService {
+    rpc ExecuteTask (ExecuteTaskRequest) returns (ExecuteTaskResponse);
+    rpc Health      (HealthRequest)     returns (HealthResponse);
+}

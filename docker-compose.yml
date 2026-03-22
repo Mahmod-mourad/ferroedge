@@ -1,0 +1,78 @@
+version: "3.9"
+
+services:
+
+  # ── Infrastructure: distributed tracing ────────────────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC receiver
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  # ── Infrastructure: metrics scraping ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"     # Prometheus UI / query API
+    depends_on:
+      - control-plane
+      - edge-node-1
+      - edge-node-2
+
+  # ── Application services ────────────────────────────────────────────────────
+  control-plane:
+    build:
+      context: .
+      dockerfile: services/control-plane/Dockerfile
+    ports:
+      - "8080:8080"     # HTTP API
+      # port 9091 (Prometheus metrics) is internal-only; scraped by prometheus
+    environment:
+      OTEL_MODE: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      METRICS_PORT: "9091"
+    env_file: .env
+    depends_on:
+      - jaeger
+
+  edge-node-1:
+    build:
+      context: .
+      dockerfile: services/edge-node/Dockerfile
+    environment:
+      NODE_ID: node-1
+      GRPC_PORT: 50051
+      CONTROL_PLANE_URL: http://control-plane:8080
+      RUST_LOG: info
+      MAX_TASKS: "10"
+      OTEL_MODE: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      METRICS_PORT: "9090"
+    ports:
+      - "50051:50051"
+    depends_on:
+      - control-plane
+      - jaeger
+
+  edge-node-2:
+    build:
+      context: .
+      dockerfile: services/edge-node/Dockerfile
+    environment:
+      NODE_ID: node-2
+      GRPC_PORT: 50052
+      CONTROL_PLANE_URL: http://control-plane:8080
+      RUST_LOG: info
+      MAX_TASKS: "10"
+      OTEL_MODE: otlp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      METRICS_PORT: "9090"
+    ports:
+      - "50052:50052"
+    depends_on:
+      - control-plane
+      - jaeger

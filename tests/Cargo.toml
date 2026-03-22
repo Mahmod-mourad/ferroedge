@@ -1,0 +1,21 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio       = { workspace = true }
+reqwest     = { workspace = true }
+base64      = { workspace = true }
+serde_json  = { workspace = true }
+anyhow      = { workspace = true }
+tonic       = { workspace = true }
+axum        = { workspace = true }
+tracing     = { workspace = true }
+wat         = "1"
+
+proto           = { path = "../crates/proto" }
+wasm-runtime    = { path = "../crates/wasm-runtime" }
+edge-node       = { path = "../services/edge-node" }
+control-plane   = { path = "../services/control-plane" }
+common          = { path = "../crates/common" }
