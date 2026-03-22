@@ -37,6 +37,7 @@ impl NodeConnectionPool {
     /// `connect_lazy()` records the endpoint without performing any I/O;
     /// the first actual RPC triggers the connection.  This keeps the method
     /// non-async and means the pool lock is held for only a hashmap lookup.
+    #[allow(clippy::result_large_err)]
     pub fn get_or_create(
         &mut self,
         node_id: &str,

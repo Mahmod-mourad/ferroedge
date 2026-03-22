@@ -11,9 +11,9 @@ use common::{errors::EdgeError, types::NodeInfo};
 #[allow(dead_code)]
 pub trait Scheduler: Send + Sync {
     /// Select the next healthy node. Returns a clone of the selected NodeInfo.
-    fn next_node<'a>(
+    fn next_node(
         &self,
-        nodes: &'a mut HashMap<String, NodeInfo>,
+        nodes: &mut HashMap<String, NodeInfo>,
         index: &mut usize,
     ) -> Result<NodeInfo, EdgeError>;
 }

@@ -7,9 +7,9 @@ use super::Scheduler;
 pub struct RoundRobinScheduler;
 
 impl Scheduler for RoundRobinScheduler {
-    fn next_node<'a>(
+    fn next_node(
         &self,
-        nodes: &'a mut HashMap<String, NodeInfo>,
+        nodes: &mut HashMap<String, NodeInfo>,
         index: &mut usize,
     ) -> Result<NodeInfo, EdgeError> {
         let healthy: Vec<&NodeInfo> = nodes.values().filter(|n| n.healthy).collect();

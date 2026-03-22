@@ -222,6 +222,7 @@ async fn grpc_execute(
 
 /// Dispatch a single task through the retry/scheduler loop.
 /// Returns the `task_id` string (even on failure — the task entry is stored).
+#[allow(clippy::too_many_arguments)]
 async fn dispatch_task(
     state: Arc<RwLock<AppState>>,
     task_id: String,
@@ -638,8 +639,8 @@ pub async fn submit_task(
 ) -> Result<impl IntoResponse, AppError> {
     let task_id = Uuid::new_v4().to_string();
     tracing::Span::current()
-        .record("trace_id", &tracing::field::display(&trace_id))
-        .record("task_id", &tracing::field::display(&task_id));
+        .record("trace_id", tracing::field::display(&trace_id))
+        .record("task_id", tracing::field::display(&task_id));
 
     let (input, wasm_source) = resolve_task_inputs(&state, &body).await?;
     let timeout_ms = body.timeout_ms.unwrap_or(5_000);
@@ -684,7 +685,7 @@ pub async fn submit_tasks_batch(
     }
 
     tracing::Span::current()
-        .record("trace_id", &tracing::field::display(&trace_id))
+        .record("trace_id", tracing::field::display(&trace_id))
         .record("batch_size", body.tasks.len());
 
     // Build all task futures, resolving WASM sources upfront.
